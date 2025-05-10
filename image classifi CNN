@@ -1,0 +1,27 @@
+from sklearn.datasets import fetch_lfw_people
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.optimizers import Adam
+import numpy as np
+
+lfw=fetch_lfw_people(min_faces_per_person=70,resize=0.4)
+x,y,n=lfw.images,lfw.target,len(lfw.target_names)
+x=np.expand_dims(x/255.0,-1)
+y=to_categorical(y,n)
+xtr,xt,yt,ytt=train_test_split(x,y,test_size=0.2)
+
+m=Sequential([
+  Conv2D(32,(3,3),activation='relu',input_shape=xtr.shape[1:]),
+  MaxPooling2D((2,2)),
+  Conv2D(64,(3,3),activation='relu'),
+  MaxPooling2D((2,2)),
+  Flatten(),
+  Dense(128,activation='relu'),
+  Dense(n,activation='softmax')
+])
+
+m.compile(optimizer=Adam(),loss='categorical_crossentropy',metrics=['accuracy'])
+m.fit(xtr,yt,epochs=2,batch_size=32,validation_split=0.2)
+print("Test Accuracy:",m.evaluate(xt,ytt)[1])
